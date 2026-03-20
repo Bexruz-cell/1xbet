@@ -1,0 +1,44 @@
+name: Football AI Predictions Bot
+
+on:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: football-bot
+  cancel-in-progress: true
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          DEFAULT_STARS_PRICE: ${{ secrets.DEFAULT_STARS_PRICE }}
+        run: |
+          while true; do
+            echo "[$(date)] Запуск бота..."
+            python main.py || echo "[$(date)] Бот упал, рестарт через 10с..."
+            sleep 10
+          done
