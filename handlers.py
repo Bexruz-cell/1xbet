@@ -268,11 +268,7 @@ async def cb_live_matches(callback: CallbackQuery):
     try:
         matches = await fetch_live_matches()
         _matches_cache = matches
-        s = get_user_settings(user_id)
-        displayed = [m for m in matches
-                     if not (s["value_only"] and not calculate_prediction(m)["is_value"])]
-        if not displayed:
-            displayed = matches
+        displayed = matches
 
         if not displayed:
             await callback.message.edit_caption(
@@ -306,11 +302,11 @@ async def cb_match_detail(callback: CallbackQuery):
     if not _matches_cache or idx >= len(_matches_cache):
         await callback.answer("Матч не найден. Обновите список.", show_alert=True)
         return
-    await callback.answer("🤖 Считаю прогноз...")
+    await callback.answer("🤖 Считаю прогноз (AI анализирует историю)...")
     match = _matches_cache[idx]
     try:
-        pred = calculate_prediction(match)
-        text = format_match_card(match, pred, idx)
+        pred = await calculate_prediction(match)
+        text = format_match_card(match, pred)
         await save_prediction(
             user_id=user_id,
             match=f"{match['home_team']} vs {match['away_team']}",
